@@ -3,6 +3,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NoteApp } from './notes.entity';
+import { HttpModule } from '@nestjs/axios';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
@@ -14,7 +16,14 @@ import { NoteApp } from './notes.entity';
     database: 'postgres',
     synchronize: true,
     entities: [NoteApp],
-}),TypeOrmModule.forFeature([NoteApp])],
+}),
+JwtModule.register({
+  global: true,
+  secret: process.env.SECRET,
+  signOptions: { expiresIn: process.env.SIGN_OPTIONS },
+}),
+TypeOrmModule.forFeature([NoteApp]),
+HttpModule],
   controllers: [AppController],
   providers: [AppService],
 })
