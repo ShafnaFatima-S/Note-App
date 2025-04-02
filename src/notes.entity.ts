@@ -3,6 +3,10 @@ import {Entity, PrimaryColumn, Column, CreateDateColumn} from "typeorm";
     export class NoteApp{
         @PrimaryColumn()
         id: string;
+
+        @Column({name:'user_id'})
+        userId: string;
+        
         @Column()
         title: string;
         @Column()
@@ -11,17 +15,19 @@ import {Entity, PrimaryColumn, Column, CreateDateColumn} from "typeorm";
         categories: string;
         @Column()
         image: string;
-        @Column()
-        pin: boolean;
-        @Column()
-        lock: boolean;
-        @Column()
-        archive:boolean;
+        @Column({default:false})
+        pin?: boolean;
+        @Column({default:false})
+        lock?: boolean;
+        @Column({nullable:true})
+        pass?:string;
+        @Column({default:false})
+        archive?:boolean;
         @Column('boolean',{default:false})
-        delete:boolean;
+        delete?:boolean;
         @Column({name:"noteDeletedAt",nullable:true})
-        noteDeletedAt:Date;
+        noteDeletedAt?:Date;
         @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
-         created_at: Date;
+         created_at?: Date;
 
 }
