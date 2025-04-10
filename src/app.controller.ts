@@ -25,16 +25,13 @@ export class AppController {
 async condition(data:any){
   let response= await axios.get('http://localhost:3000/checkLogIn',
     {'headers':{'Authorization':data.authorization}})
-    const auth:string=data.authorization
-    console.log(response.data)
-     const new_token1:string=auth.replace('Bearer','').trim()
-    // console.log(new_token1)
-     const decode=this.jwtService.verify(new_token1,{secret:'secret'})
-    // console.log(decode)
-    const user_id= decode.id
-    // console.log(user_id)
-    return user_id
-   
+    // console.log("response=====>",response.data)
+    if(!response){
+      return {status:"ERROR",message:"Invalid token"}
+    }
+    const res=response.data.data
+    console.log("res----->",res)
+   return res
   }
   @Post('createNotes')
   async createNote(@Headers() data:any, @Body() createNotes: INote) {
@@ -42,13 +39,10 @@ async condition(data:any){
       const user_id = await this.condition(data);
      
       console.log(user_id)
-      if(!user_id){
-        throw new Error("Invalid token")
-      }
-      else{
+      
         console.log('create===>>', createNotes);
         return this.appService.createNotes(createNotes,user_id);
-      }
+      
      
     }
     catch(e){
@@ -56,19 +50,14 @@ async condition(data:any){
     }
   }
 
-  @Get('get/:id')
-  async findId(@Headers() data:any,@Param() params: { id: string },@Body() data1:string) {
+  @Get('get')
+  async findId(@Headers() data:any,@Body() data1:INote) {
     // console.log('data------>>>', params.id);
     try{
       const user_id = await this.condition(data);
      
-      console.log(user_id)
-      if(!user_id){
-        throw new Error("Invalid token")
-      }
-      else{
-        return this.appService.getId(params.id,data1);
-      }
+        return this.appService.getId(data,data1,user_id);
+      
   }
   catch(e){
     return `Request failed with error:  ${e.message}`
@@ -78,15 +67,7 @@ async condition(data:any){
     async allNote(@Headers() data:any){
       try{
         const user_id = await this.condition(data);
-       
-        console.log(user_id)
-        if(!user_id){
-          throw new Error("Invalid token")
-        }
-        else{
-
           return this.appService.getAll()
-        }
        
       }
       catch(e){
@@ -94,62 +75,36 @@ async condition(data:any){
       }
     }
 
-  @Put('update/:id')
-    async updateNote(@Headers() data:any,@Param() params:{id:string} ,
-      @Body() data1:INote) {
+  @Put('update')
+    async updateNote(@Headers() data:any,@Body() update:INote ,
+      ) {
         try{
           const user_id = await this.condition(data);
-         
-          console.log(user_id)
-          if(!user_id){
-            throw new Error("Invalid token")
+           
+            return this.appService.Update(data,update,user_id)
           }
-          else{
-            console.log(data1)
-            return this.appService.Update(params.id,data1)
-          }
-         
-        }
         catch(e){
          return `Request failed with error:  ${e.message}`
         }
     }
 
-  @Delete('deleteById/:id')
-    async DeleteNote(@Headers() data:any,@Param() params:{id: string} ){
+  @Delete('deleteById')
+    async DeleteNote(@Headers() data:any,@Body() remove:INote  ){
       try{
         const user_id = await this.condition(data);
-       
-        console.log(user_id)
-        if(!user_id){
-          throw new Error("Invalid token")
+          return this.appService.Remove(data,remove,user_id)
         }
-        else{
-          return this.appService.Remove(params.id)
-        }
-       
-      }
       catch(e){
        return `Request failed with error:  ${e.message}`
       }
-
-      
     }
   
   @Get('last30Days')
     async LastDeletedNote(@Headers() data:any){
       try{
         const user_id = await this.condition(data);
-       
-        console.log(user_id)
-        if(!user_id){
-          throw new Error("Invalid token")
-        }
-        else{
           return this.appService.Deleted()
         }
-       
-      }
       catch(e){
        return `Request failed with error:  ${e.message}`
       }
@@ -157,59 +112,52 @@ async condition(data:any){
       
     }
 
-  @Get('pin/:id')
-    async pinNote(@Headers() data:any,@Param() params:{id: string} ){
+  @Get('pin')
+    async pinNote(@Headers() data:any,@Body()pin:INote ){
       try{
         const user_id = await this.condition(data);
-       
-        console.log(user_id)
-        if(!user_id){
-          throw new Error("Invalid token")
-        }
-        else{
-          return  this.appService.pin(params.id,user_id)
-        }
+          return  this.appService.pin(pin,user_id)
+        
       }
       catch(e){
        return `Request failed with error:  ${e.message}`
       }
   }
-  @Get('archive/:id')
-  async archiveNote(@Headers() data:any,@Param() params:{id: string}){
+  @Get('archive')
+  async archiveNote(@Headers() data:any,@Body()archive:INote){
     try{
       const user_id = await this.condition(data);
-     
-      console.log(user_id)
-      if(!user_id){
-        throw new Error("Invalid token")
+        return  this.appService.archive(data,archive,user_id)
       }
-      else{
-        return  this.appService.archive(params.id)
-      }
-    }
+    
     catch(e){
      return `Request failed with error:  ${e.message}`
     }
   }
 
-@Post('lock/:id')
-async lockNote(@Headers() data:any, @Param() params:{id:string}, @Body() data1:string){
+@Post('lock')
+async lockNote(@Headers() data:any,  @Body()lock:INote){
   try{
     const user_id = await this.condition(data);
-   
-    console.log(user_id)
-    if(!user_id){
-      throw new Error("Invalid token")
+      return  this.appService.lock(data,lock,user_id)
     }
-    else{
-      return  this.appService.lock(params.id,data1)
-    }
-  }
+  
   catch(e){
    return `Request failed with error:  ${e.message}`
   }
 }
 
+@Get('check')
+async CheckNote(@Headers() data:any, @Body() check:INote){
+  try{
+    const user_id = await this.condition(data);
+      return  this.appService.check(data,check,user_id)
+    }
+  
+  catch(e){
+   return `Request failed with error:  ${e.message}`
+  }
+}
 
 }
 

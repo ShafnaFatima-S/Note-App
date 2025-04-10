@@ -19,8 +19,8 @@ import {Entity, PrimaryColumn, Column, CreateDateColumn} from "typeorm";
         pin?: boolean;
         @Column({default:false})
         lock?: boolean;
-        @Column({nullable:true})
-        pass?:string;
+        // @Column({nullable:true})
+        // pass?:string;
         @Column({default:false})
         archive?:boolean;
         @Column('boolean',{default:false})
@@ -30,4 +30,12 @@ import {Entity, PrimaryColumn, Column, CreateDateColumn} from "typeorm";
         @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
          created_at?: Date;
 
-}
+    }
+    
+@Entity('lock_notes')
+    export class LockNote{
+        @PrimaryColumn()
+        userId:string;
+        @Column({name:"lock_password"})
+        lockPassword:string;
+    }

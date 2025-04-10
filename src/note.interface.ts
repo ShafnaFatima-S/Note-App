@@ -6,5 +6,6 @@ export interface INote{
     pin:boolean;
     lock:boolean;
     archive:boolean;
-   pass:string
+   pass:string;
+   id:string;
 }
