@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {INote} from './note.interface';
 import { generateID } from '@jetit/id';
 import { NoteApp } from './notes.entity';
+import { LockNote } from './notes.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import {Between, Repository} from 'typeorm';
 import { HttpService } from '@nestjs/axios';
@@ -13,8 +14,9 @@ import { JwtService } from '@nestjs/jwt';
 export class AppService {
   
   constructor(
-    @InjectRepository(NoteApp)
-    private noteEntity: Repository<NoteApp>,
+    @InjectRepository(NoteApp) private noteEntity: Repository<NoteApp>,
+    @InjectRepository(LockNote) private lockEntity: Repository<LockNote>,
+   
     private jwtService: JwtService,
   ){}
   // getHello(): string {
@@ -62,16 +64,12 @@ export class AppService {
     }
   }
 
-  async getId(id:string,data:string){
+  async getId(user_id:any,data:INote,login_id:any){
     try{
-    //  const search= this.noteList.find((i)=>{
-    //   return i.id===id
-    //  })
-    // if(! search)throw new Error("No match found")
-    //   // console.log(search)
-    // return search
-    console.log(id)
-    const byId= await this.noteEntity.findOne({where:{id,delete:false}});
+      const find_new=await this.noteEntity.find({where:{userId:login_id}})
+      if(!find_new) throw new Error("User Id not found")
+      const Id=data.id
+    const byId= await this.noteEntity.findOne({where:{id:Id,delete:false,lock:false,archive:false}});
     // console.log("By Id---",byId) 
     if(!byId) throw new Error("Id not found")
     return {status:'SUCCESS',message:"Retrieved Note By Id",data:byId}
@@ -85,33 +83,27 @@ export class AppService {
   async getAll(){
     try{
       // return this.noteList;
-      const allData=(await this.noteEntity.find({where:{delete:false,archive:false,pass:"false"},order:{pin:'DESC'}}));
+      const allData=await this.noteEntity.find({where:{delete:false,archive:false,lock:false},order:{pin:'DESC'}});
       return {status:'SUCCESS',message:"Listed All Notes",data:allData}
     }
     catch(e){
       return `Request failed with error:  ${e.message}`
     }
   }
-  async Update(id:string,data: INote){
+  async Update(user_id:any,data: INote,login_id:any){
     try{
-    //   const search= this.noteList.find((i)=>{
-    //    return i.id===id
-    //   })
-    //  if(! search)throw new Error("No match found")
-    //   const update=this.noteList.indexOf(search)
-    //         this.noteList.splice(update,1)
-            
-    //         const newData={...search,...data}
-    //         this.noteList.push(newData)
-    //         // console.log(newData)
-    //         return newData
+      const find_new=await this.noteEntity.find({where:{userId:login_id}})
+      if(!find_new) throw new Error("Id not found")
+     
            if(! /^(personal|work)$/.test(data.categories)){
             throw new Error("Choose either work or personal ")
            }
-           const find=await this.noteEntity.findOne({where:{id}})
+
+           const Id=data.id
+           const find=await this.noteEntity.findOne({where:{id:Id}})
             if(!find)throw new Error("Id not found")
           //  console.log("data---->",find)
-            const updateResult= await this.noteEntity.update({id},data)
+            const updateResult= await this.noteEntity.update({id:Id},data)
             // const byId= await this.noteEntity.findOne({where:{id}});
             return {status:'SUCCESS',message:"Note Updated Successfully",data:{...find,...data}}
 
@@ -122,18 +114,17 @@ export class AppService {
   }
 
 
-  async Remove(id: string){
+  async Remove(user_id:any,data:INote,login_id:any){
     try{
-      // const search= this.noteList.findIndex((i)=>{
-      //   return i.id===id
-      //  })
-      // if(! search)throw new Error("No match found")
-      //   this.noteList.splice(search,1)
-      // return this.noteList
-      const check= await this.noteEntity.findOne({where:{id}});
-      if(!check)throw new Error("Id not found")
-        // console.log("check----->",check)
-      const upd=await this.noteEntity.update({id},{delete:true,noteDeletedAt:new Date()})
+
+      const find=await this.noteEntity.find({where:{userId:login_id}})
+      if(!find) throw new Error("Id not found")
+      const Id=data.id
+        const new1= await this.noteEntity.findOne({where:{id:Id}})
+        if(!new1){
+          throw new Error("Id not found")
+        }
+      const upd=await this.noteEntity.update({id:Id},{delete:true,noteDeletedAt:new Date()})
       
       return {status:"SUCCESS",message:"Note Deleted Successfully"}
     }
@@ -155,16 +146,27 @@ export class AppService {
   }
 
 
-  async pin(id:string,user_id:string){
+  async pin(data:INote,login_id:any){
     try{
-      const pinned=await this.noteEntity.findOne({where:{id}})
-      if(!pinned) throw new Error("Id not found")
+      const find=await this.noteEntity.find({where:{userId:login_id}})
+      if(!find) throw new Error("Id not found")
+      const Id=data.id
+    
       const limit=5
-      const setLimit=await this.noteEntity.count({where:{userId:user_id,pin:true}})
+      const setLimit=await this.noteEntity.count({where:{pin:true}})
+      // console.log(setLimit)
       if(setLimit>limit){
         throw new Error("The pin limit is only 5")
       }
-      const pinnedId=await this.noteEntity.update({id},{pin:true})
+
+      const new1= await this.noteEntity.findOne({where:{id:Id}})
+      // console.log(new1)
+      if(!new1){
+        throw new Error("Id not found")
+      }
+
+       const pinnedId=await this.noteEntity.update({id:Id},{pin:true})
+      
       return {status:"SUCCESS",message:"The note is pinned"}
     }
    catch(e){
@@ -173,11 +175,17 @@ export class AppService {
   }
 
 
-  async archive(id:string){
+  async archive(user_id:any,data:INote,login_id:any){
     try{
-      const data=await this.noteEntity.findOne({where:{id}})
-      if(!data) throw new Error("Id not found")
-      const archive_data=await this.noteEntity.update({id},{archive:true})
+      const find=await this.noteEntity.find({where:{userId:login_id}})
+      if(!find) throw new Error("Id not found")
+      const Id=data.id
+      console.log("ID=====>",Id)
+      const new1= await this.noteEntity.findOne({where:{id:Id}})
+      if(!new1){
+      throw new Error("Id not found")
+      }
+      const archive_data=await this.noteEntity.update({id:Id},{archive:true})
       return {status:"SUCCESS",message:"The note is archived"}
     }
     catch(e){
@@ -185,20 +193,52 @@ export class AppService {
      }
   }
 
- async lock(id:string,inData:string){
+ async lock(user_id:any,data:INote,login_id:any){
   try{
-    const find=await this.noteEntity.findOne({where:{id}})
-    if(!find) throw new Error("Id not found")
-    const password=inData
-  
+    
+      console.log("note------->",login_id)
+     const find=await this.noteEntity.find({where:{userId:login_id}})
+     if(!find) throw new Error("User Id not found")
+    const password=data.pass
+    const Id=data.id
+    console.log("data===>",data)
     // console.log(password)
-  const save=await this.noteEntity.update({id},{pass:password})
+    // console.log("id--->",Id)
+  const new1= await this.noteEntity.findOne({where:{id:Id}})
+  if(!new1){
+    throw new Error("Id not found")
+  }
+  const detail={...login_id,lockPassword:password}
+ console.log("detail",detail)
+  const save=await this.noteEntity.update({id:Id},{lock:true})
+
+   const lock=await this.lockEntity.save(detail)
   return {status:"SUCCESS",message:"Password created!"}
   }
   catch(e){
     return `Request failed with error:  ${e.message}`
    }
  }
+
+async check(user_id:any,data:INote,login_id:any){
+  try{
+    const find=await this.noteEntity.find({where:{userId:login_id}})
+    if(!find) throw new Error("User Id not found")
+    const Id=data.id
+  const pass=data.pass
+  
+       const info=await this.lockEntity.findOne({where:{userId:Id,lockPassword:pass}})
+      const display=await this.noteEntity.find({where:{lock:true}})
+
+      // console.log(display)
+      if(!info) throw new Error("Invalid password")
+      return {status:"SUCCESS",message:"Passwords matched",data:display}
+  }
+  catch(e){
+    return `Request failed with error:  ${e.message}`
+  }
+  
+}
 
 
 }
