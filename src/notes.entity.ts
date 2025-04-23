@@ -13,7 +13,7 @@ import {Entity, PrimaryColumn, Column, CreateDateColumn} from "typeorm";
         description: string;
         @Column()
         categories: string;
-        @Column()
+        @Column({nullable:true})
         image: string;
         @Column({default:false})
         pin?: boolean;
@@ -25,9 +25,9 @@ import {Entity, PrimaryColumn, Column, CreateDateColumn} from "typeorm";
         archive?:boolean;
         @Column('boolean',{default:false})
         delete?:boolean;
-        @Column({name:"noteDeletedAt",nullable:true})
+        @Column({ name:"noteDeletedAt",nullable:true})
         noteDeletedAt?:Date;
-        @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
+        @CreateDateColumn({ type: "date", default: () => "CURRENT_TIMESTAMP(6)" })
          created_at?: Date;
 
     }

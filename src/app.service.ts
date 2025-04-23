@@ -4,10 +4,12 @@ import { generateID } from '@jetit/id';
 import { NoteApp } from './notes.entity';
 import { LockNote } from './notes.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import {Between, Repository} from 'typeorm';
+import {Between, LessThan, MoreThan, Repository} from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { JwtService } from '@nestjs/jwt';
+import { subDays } from 'date-fns/subDays';
+import { format } from 'date-fns';
 
 @Injectable()
 
@@ -80,8 +82,10 @@ export class AppService {
         return `Request failed with error:  ${e.message}`
     }
   }
-  async getAll(){
+  async getAll(login_id:any){
     try{
+      const find_new=await this.noteEntity.find({where:{userId:login_id}})
+      if(!find_new) throw new Error("Id not found")
       // return this.noteList;
       const allData=await this.noteEntity.find({where:{delete:false,archive:false,lock:false},order:{pin:'DESC'}});
       return {status:'SUCCESS',message:"Listed All Notes",data:allData}
@@ -134,10 +138,12 @@ export class AppService {
   }
 
 
-  async Deleted(){
+  async Deleted(login_id:any){
     try{
-      const last= await this.noteEntity.find({where:{noteDeletedAt: Between(new Date(2025,2,20),new Date(2025,3,20))}})
-      // console.log("Data=======>",last)
+      const find=await this.noteEntity.find({where:{userId:login_id}})
+      if(!find) throw new Error("Id not found")
+      const last= await this.noteEntity.find({where:{noteDeletedAt: MoreThan(subDays(new Date(),30))}})
+       console.log("Data=======>",last)
       return {status:'SUCCESS',data:last}
     }
     catch(e){
@@ -146,7 +152,7 @@ export class AppService {
   }
 
 
-  async pin(data:INote,login_id:any){
+  async pin(data:{id:string},login_id:any){
     try{
       const find=await this.noteEntity.find({where:{userId:login_id}})
       if(!find) throw new Error("Id not found")
@@ -224,10 +230,10 @@ async check(user_id:any,data:INote,login_id:any){
   try{
     const find=await this.noteEntity.find({where:{userId:login_id}})
     if(!find) throw new Error("User Id not found")
-    const Id=data.id
-  const pass=data.pass
+    
+    const pass=data.pass
   
-       const info=await this.lockEntity.findOne({where:{userId:Id,lockPassword:pass}})
+       const info=await this.lockEntity.findOne({where:{lockPassword:pass}})
       const display=await this.noteEntity.find({where:{lock:true}})
 
       // console.log(display)
@@ -242,4 +248,6 @@ async check(user_id:any,data:INote,login_id:any){
 
 
 }
+
+
 
