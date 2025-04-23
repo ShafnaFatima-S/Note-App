@@ -1,4 +1,4 @@
-import {Body,Controller,Delete,Get,Param,Post,Put,Headers} from '@nestjs/common';
+import {Body,Controller,Delete,Get,Param,Post,Put,Headers, Query} from '@nestjs/common';
 import { AppService } from './app.service';
 import { INote } from './note.interface';
 import { HttpService } from '@nestjs/axios';
@@ -67,7 +67,7 @@ async condition(data:any){
     async allNote(@Headers() data:any){
       try{
         const user_id = await this.condition(data);
-          return this.appService.getAll()
+          return this.appService.getAll(user_id);
        
       }
       catch(e){
@@ -88,7 +88,7 @@ async condition(data:any){
         }
     }
 
-  @Delete('deleteById')
+  @Delete('delete')
     async DeleteNote(@Headers() data:any,@Body() remove:INote  ){
       try{
         const user_id = await this.condition(data);
@@ -103,7 +103,7 @@ async condition(data:any){
     async LastDeletedNote(@Headers() data:any){
       try{
         const user_id = await this.condition(data);
-          return this.appService.Deleted()
+          return this.appService.Deleted(user_id)
         }
       catch(e){
        return `Request failed with error:  ${e.message}`
@@ -113,10 +113,10 @@ async condition(data:any){
     }
 
   @Get('pin')
-    async pinNote(@Headers() data:any,@Body()pin:INote ){
+    async pinNote(@Headers() data:any,@Query('id')id:string){
       try{
         const user_id = await this.condition(data);
-          return  this.appService.pin(pin,user_id)
+          return  this.appService.pin({id},user_id)
         
       }
       catch(e){
