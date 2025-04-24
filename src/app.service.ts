@@ -56,7 +56,7 @@ export class AppService {
       
      const notes:NoteApp={...inData,userId:user_id,id}
      console.log(notes)
-      this.noteEntity.save(notes)
+     this.noteEntity.save(notes)
       // console.log(this.noteList)
       
     return {status:'SUCCESS',message:"Note Created Successfully",data:notes}
@@ -66,7 +66,7 @@ export class AppService {
     }
   }
 
-  async getId(user_id:any,data:INote,login_id:any){
+  async getId(user_id:any,data:{id:string},login_id:any){
     try{
       const find_new=await this.noteEntity.find({where:{userId:login_id}})
       if(!find_new) throw new Error("User Id not found")
@@ -99,14 +99,11 @@ export class AppService {
       const find_new=await this.noteEntity.find({where:{userId:login_id}})
       if(!find_new) throw new Error("Id not found")
      
-           if(! /^(personal|work)$/.test(data.categories)){
-            throw new Error("Choose either work or personal ")
-           }
-
+          //  console.log("data details--->",data)
            const Id=data.id
            const find=await this.noteEntity.findOne({where:{id:Id}})
             if(!find)throw new Error("Id not found")
-          //  console.log("data---->",find)
+           console.log("data id---->",find)
             const updateResult= await this.noteEntity.update({id:Id},data)
             // const byId= await this.noteEntity.findOne({where:{id}});
             return {status:'SUCCESS',message:"Note Updated Successfully",data:{...find,...data}}
@@ -118,7 +115,7 @@ export class AppService {
   }
 
 
-  async Remove(user_id:any,data:INote,login_id:any){
+  async Remove(user_id:any,data:{id:string},login_id:any){
     try{
 
       const find=await this.noteEntity.find({where:{userId:login_id}})
@@ -181,7 +178,7 @@ export class AppService {
   }
 
 
-  async archive(user_id:any,data:INote,login_id:any){
+  async archive(user_id:any,data:{id:string},login_id:any){
     try{
       const find=await this.noteEntity.find({where:{userId:login_id}})
       if(!find) throw new Error("Id not found")
@@ -244,6 +241,32 @@ async check(user_id:any,data:INote,login_id:any){
     return `Request failed with error:  ${e.message}`
   }
   
+}
+
+async getArchive(login_id:any){
+  try{
+    const find_new=await this.noteEntity.find({where:{userId:login_id}})
+    if(!find_new) throw new Error("Id not found")
+    // return this.noteList;
+    const allData=await this.noteEntity.find({where:{archive:true,lock:false,delete:false}});
+    return {status:'SUCCESS',message:"Listed All Archived Notes",data:allData}
+  }
+  catch(e){
+    return `Request failed with error:  ${e.message}`
+  }
+}
+
+async getLock(login_id:any){
+  try{
+    const find_new=await this.noteEntity.find({where:{userId:login_id}})
+    if(!find_new) throw new Error("Id not found")
+    // return this.noteList;
+    const allData=await this.noteEntity.find({where:{lock:true,delete:false}});
+    return {status:'SUCCESS',message:"Listed All locked Notes",data:allData}
+  }
+  catch(e){
+    return `Request failed with error:  ${e.message}`
+  }
 }
 
 
