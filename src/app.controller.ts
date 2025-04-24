@@ -51,12 +51,12 @@ async condition(data:any){
   }
 
   @Get('get')
-  async findId(@Headers() data:any,@Body() data1:INote) {
+  async findId(@Headers() data:any,@Query('id') id:string) {
     // console.log('data------>>>', params.id);
     try{
       const user_id = await this.condition(data);
      
-        return this.appService.getId(data,data1,user_id);
+        return this.appService.getId(data,{id},user_id);
       
   }
   catch(e){
@@ -89,10 +89,10 @@ async condition(data:any){
     }
 
   @Delete('delete')
-    async DeleteNote(@Headers() data:any,@Body() remove:INote  ){
+    async DeleteNote(@Headers() data:any,@Query('id') id:string  ){
       try{
         const user_id = await this.condition(data);
-          return this.appService.Remove(data,remove,user_id)
+          return this.appService.Remove(data,{id},user_id)
         }
       catch(e){
        return `Request failed with error:  ${e.message}`
@@ -124,10 +124,10 @@ async condition(data:any){
       }
   }
   @Get('archive')
-  async archiveNote(@Headers() data:any,@Body()archive:INote){
+  async archiveNote(@Headers() data:any,@Query('id')id:string){
     try{
       const user_id = await this.condition(data);
-        return  this.appService.archive(data,archive,user_id)
+        return  this.appService.archive(data,{id},user_id)
       }
     
     catch(e){
@@ -159,6 +159,30 @@ async CheckNote(@Headers() data:any, @Body() check:INote){
   }
 }
 
+@Get('getArchive')
+async GetArchive(@Headers() data:any){
+  try{
+    const user_id = await this.condition(data);
+      return this.appService.getArchive(user_id);
+   
+  }
+  catch(e){
+   return `Request failed with error:  ${e.message}`
+  }
+}
+
+
+@Get('getLock')
+async GetLock(@Headers() data:any){
+  try{
+    const user_id = await this.condition(data);
+      return this.appService.getLock(user_id);
+   
+  }
+  catch(e){
+   return `Request failed with error:  ${e.message}`
+  }
+}
 }
 
 
