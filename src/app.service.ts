@@ -215,7 +215,7 @@ export class AppService {
  console.log("detail",detail)
   const save=await this.noteEntity.update({id:Id},{lock:true})
 
-   const lock=await this.lockEntity.save(detail)
+  //  const lock=await this.lockEntity.save(detail)
   return {status:"SUCCESS",message:"Password created!"}
   }
   catch(e){
